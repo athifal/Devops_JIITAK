@@ -13,22 +13,24 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v2
 
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Build and Push Docker Image
+      run: |
+        docker build -t athifal/flask-app:latest .
+        docker push athifal/flask-app:latest
+
     - name: Set up SSH
       run: |
         echo "${{ secrets.EC2_PEM_KEY }}" > ec2-key.pem
         chmod 600 ec2-key.pem
 
-    - name: Copy Files to EC2
-      run: |
-        ssh -i ec2-key.pem -o StrictHostKeyChecking=no ec2-user@44.203.87.46 "mkdir -p ~/flask-app"
-        scp -i ec2-key.pem -o StrictHostKeyChecking=no -r * ec2-user@44.203.87.46:~/flask-app/
-
     - name: Deploy on EC2
       run: |
         ssh -i ec2-key.pem -o StrictHostKeyChecking=no ec2-user@44.203.87.46 << 'EOF'
-        cd ~/flask-app
+        docker pull athifal/flask-app:latest
         docker stop flask-app || true
         docker rm flask-app || true
-        docker build -t flask-app .
-        docker run -d --name flask-app -p 80:5000 flask-app
+        docker run -d --name flask-app -p 80:5000 your-dockerhub-username/flask-app:latest
         EOF
