@@ -3,7 +3,7 @@ name: CI/CD for Flask App
 on:
   push:
     branches:
-      - main  # Change this to your branch if needed
+      - master  
 
 jobs:
   deploy:
